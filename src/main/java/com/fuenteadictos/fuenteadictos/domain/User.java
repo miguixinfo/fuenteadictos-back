@@ -12,6 +12,9 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.constraints.Pattern;
+import javax.validation.constraints.Size;
+
 @Entity
 @Table(name = "user")
 @Data
@@ -20,13 +23,18 @@ import lombok.NoArgsConstructor;
 @DynamicUpdate
 @Builder
 public class User extends BaseObject implements Serializable{
-    
-    @Column(name = "email", nullable = false)
+
+    @Pattern(regexp = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,6}$", message = "Invalid email")
+    @Size(min = 5, max = 50, message = "Email must be between 5 and 50 characters")
+    @Column(name = "email", nullable = false, length = 50, unique = true)
     private String email;
 
+    @Pattern(regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)[a-zA-Z\\d]{8,}$", message = "Password must contain at least one uppercase letter, one lowercase letter and one number")
+    @Size(min = 8, max = 20, message = "Password must be between 8 and 50 characters")
     @Column(name = "password", nullable = false)
     private String password;
 
+    @Size(min = 4, max = 20, message = "Username must be between 5 and 20 characters")
     @Column(name = "username", nullable = false)
     private String username;
 
