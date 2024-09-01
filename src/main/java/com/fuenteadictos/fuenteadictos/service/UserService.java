@@ -8,6 +8,7 @@ import com.fuenteadictos.fuenteadictos.domain.User;
 
 import javax.validation.Valid;
 
+
 public interface UserService {
     
     List<User> getUsers();
@@ -21,4 +22,5 @@ public interface UserService {
     User retireUser(User user);
 
     User getUserByCredentials(User user);
+
 }

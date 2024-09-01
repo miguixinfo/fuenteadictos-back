@@ -15,7 +15,7 @@ import com.fuenteadictos.fuenteadictos.service.UserService;
 import com.fuenteadictos.fuenteadictos.util.JWTUtil;
 
 @RestController
-@RequestMapping(value = "api/login")
+@RequestMapping(value = "fuenteadictos/api/auth")
 @CrossOrigin(origins = "*", allowedHeaders = "*")
 public class AuthController {
     
@@ -25,17 +25,25 @@ public class AuthController {
 	@Autowired
 	private JWTUtil jwtUtil;
 	
-	@PostMapping
+	@PostMapping("/login")
 	public Map<String, Object> login(@RequestBody User user) {
 		Map<String, Object> response = new HashMap<>();
 		User loggedUser = service.getUserByCredentials(user);
 		if(loggedUser != null) {
-			String tokenJWT = jwtUtil.create(String.valueOf(loggedUser.getId()), loggedUser.getEmail());
+			String tokenJWT = jwtUtil.create(String.valueOf(loggedUser.getUsername()), loggedUser.getEmail());
 
 			response.put("token", tokenJWT);
             response.put("success", "OK");
 		} else response.put("success", "FAIL");
 		return response;
 	}
+
+	@PostMapping("/register")
+	public User register(@RequestBody User user) {
+		User newUser = service.createUser(user);
+        return newUser;
+	}
+	
+	
 
 }

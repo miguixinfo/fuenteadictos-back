@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -27,7 +28,7 @@ import javax.validation.Valid;
 
 @Slf4j
 @RestController
-@RequestMapping(value = "api/users")
+@RequestMapping(value = "/fuenteadictos/api/users")
 @CrossOrigin(origins = "*", allowedHeaders = "*")
 public class UserController {
     
@@ -35,8 +36,8 @@ public class UserController {
     private UserService service;
 
     
-    @GetMapping("/all")
-    @ResponseStatus()
+    @GetMapping
+    @ResponseStatus(HttpStatus.OK)
     public List<User> getAllUsers() {
         List<User> users = service.getUsers();
         if (users.isEmpty())
@@ -59,8 +60,8 @@ public class UserController {
 
     @PostMapping
     public User createUser(@Valid @RequestBody User user) {
-            User newUser = service.createUser(user);
-            return newUser;
+        User newUser = service.createUser(user);
+        return newUser;
     }
 
 

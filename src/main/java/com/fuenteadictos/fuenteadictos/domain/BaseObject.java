@@ -30,9 +30,8 @@ public abstract class BaseObject {
 
     @GeneratedValue(generator = "UUID")
     @GenericGenerator(name = "UUID", strategy = "org.hibernate.id.UUIDGenerator")
-    @Column(updatable = false, unique = true, columnDefinition = "VARCHAR(36)")
-    private String uuid; // REVISAR, NO SE GENERA AUTOMÁTICAMENTE FIXME
-                         // CUANDO SEPA COMO GENERARLO PONER nullable = false
+    @Column(updatable = false, unique = true, length = 38, nullable = false)
+    private String uuid = UUID.randomUUID().toString();
 
     @CreationTimestamp
     @Column(name = "created_date", nullable = false)

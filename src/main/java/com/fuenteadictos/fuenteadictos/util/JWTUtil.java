@@ -1,91 +1,73 @@
 package com.fuenteadictos.fuenteadictos.util;
 
-import java.nio.charset.StandardCharsets;
-import java.security.Key;
-import java.util.Date;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
-
 import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.JwtBuilder;
-import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
-import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.stereotype.Component;
+
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.function.Function;
 
 @Component
 public class JWTUtil {
 
-	 @Value("${security.jwt.secret}")
-	    private String key;
+	@Value("${jwt.secret}")
+	private String secret;
 
-	    @Value("${security.jwt.issuer}")
-	    private String issuer;
+	@Value("${jwt.expiration}")
+	private long jwtExpirationInMs;
 
-	    @Value("${security.jwt.ttlMillis}")
-	    private long ttlMillis;
+	// Crear un token JWT
+	@SuppressWarnings("deprecation")
+	public String create(String userId, String email) {
+		Map<String, Object> claims = new HashMap<>();
+		claims.put("email", email);
+		return Jwts.builder()
+				.setClaims(claims)
+				.setSubject(userId)
+				.setIssuedAt(new Date(System.currentTimeMillis()))
+				.setExpiration(new Date(System.currentTimeMillis() + jwtExpirationInMs))
+				.signWith(SignatureAlgorithm.HS256, secret)
+				.compact();
+	}
 
-	    @SuppressWarnings("unused")
-        private final Logger log = LoggerFactory
-	            .getLogger(JWTUtil.class);
+	// Extraer el email (o nombre de usuario) del token JWT
+	public String extractUsername(String token) {
+		return extractClaim(token, Claims::getSubject);
+	}
 
+	// Validar el token JWT
+	public boolean validateToken(String token, UserDetails userDetails) {
+		final String username = extractUsername(token);
+		return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
+	}
 
-	    public String create(String id, String subject) {
+	// Extraer un claim específico del token JWT
+	public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
+		final Claims claims = extractAllClaims(token);
+		return claimsResolver.apply(claims);
+	}
 
+	// Extraer todos los claims del token JWT
+	@SuppressWarnings("deprecation")
+	private Claims extractAllClaims(String token) {
+		return Jwts.parser()
+				.setSigningKey(secret)
+				.parseClaimsJws(token)
+				.getBody();
+	}
 
-	        long nowMillis = System.currentTimeMillis();
-	        Date now = new Date(nowMillis);
+	// Verificar si el token ha expirado
+	private boolean isTokenExpired(String token) {
+		return extractExpiration(token).before(new Date());
+	}
 
-	        JwtBuilder builder = Jwts.builder()
-	                .setId(id)
-	                .setIssuedAt(now)
-	                .setSubject(subject)
-	                .setIssuer(issuer)
-	                .signWith(toKey(key),SignatureAlgorithm.HS256);
-
-	        if (ttlMillis >= 0) {
-	            long expMillis = nowMillis + ttlMillis;
-	            Date exp = new Date(expMillis);
-	            builder.setExpiration(exp);
-	        }
-
-	        // Builds the JWT and serializes it to a compact, URL-safe string
-	        return builder.compact();
-	    }
-
-	    public String getValue(String jwt) {
-	        Claims claims=obtenerClaims(jwt);
-	        if (claims==null) return null;
-	        return claims.getSubject();
-	    }
-
-	    public String getKey(String jwt) {
-	        Claims claims=obtenerClaims(jwt);
-	        if (claims==null) return null;
-	        return claims.getId();
-	    }
-
-	    // Clases de apoyo
-	    private Key toKey(String key){
-	        return Keys.hmacShaKeyFor(key.getBytes(StandardCharsets.UTF_8));
-	    }
-	    // Valida jws y obtiene claims
-	    private Claims obtenerClaims(String jws){
-	        Claims claims;
-	        try {
-	            claims = Jwts.parserBuilder()
-	                    .setSigningKey(toKey(key))
-	                    .build()
-	                    .parseClaimsJws(jws)
-	                    .getBody();
-	        }
-	        catch (JwtException exp) {
-	            return null;
-	        }
-	        return claims;
-	    }
-	
+	// Extraer la fecha de expiración del token JWT
+	private Date extractExpiration(String token) {
+		return extractClaim(token, Claims::getExpiration);
+	}
 }
