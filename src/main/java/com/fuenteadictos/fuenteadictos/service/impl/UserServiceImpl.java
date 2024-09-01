@@ -3,7 +3,8 @@ package com.fuenteadictos.fuenteadictos.service.impl;
 import java.util.List;
 import java.util.Optional;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import javax.validation.Valid;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,8 +20,11 @@ import de.mkammerer.argon2.Argon2Factory;
 @Service
 public class UserServiceImpl implements UserService {
 
-    @Autowired
-    private UserRepository repository;
+    private final UserRepository repository;
+
+    public UserServiceImpl(UserRepository repository) {
+        this.repository = repository;
+    }
 
     @Override
     @Transactional(readOnly = true)
@@ -40,11 +44,11 @@ public class UserServiceImpl implements UserService {
     @SuppressWarnings("deprecation") // REVISAR ESTA PARTE DEPRECADA, FIXME
     @Override
     @Transactional
-    public User createUser(User newUser) {
+    public User createUser(@Valid User newUser) {
         Optional<User> foundUser = Optional.empty();
         foundUser = repository.findByUsername(newUser.getUsername());
         if (foundUser.isPresent())
-            throw new UserAlreadyExistsException("User with username " + newUser.getUsername() + " already exists");
+            throw new UserAlreadyExistsException("User with username '" + newUser.getUsername() + "' already exists");
         foundUser = repository.findByEmail(newUser.getEmail());
         if (foundUser.isPresent())
             throw new UserAlreadyExistsException("User with email " + newUser.getEmail() + " already exists");
